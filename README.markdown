@@ -1,5 +1,5 @@
-This project was inspired by translink-opiaproxy (https://github.com/wislon/translink-opiaproxy), who has done a awesome job of making the 
-Translink OPIA API easy to use.
+This project was inspired by translink-opiaproxy (https://github.com/wislon/translink-opiaproxy), who has done a awesome job of making the Translink OPIA API easy to use.
+Checkout my version of his implmentionation: https://github.com/jaredb7/OpiaProxy
 
 This is a CakePHP Plugin allowing easy access to the GTFS Real-Time feed offered by Translink
 https://gtfsrt.api.translink.com.au/
