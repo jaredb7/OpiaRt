@@ -4,7 +4,7 @@ Checkout my version of his implmentionation: https://github.com/jaredb7/OpiaProx
 
 This is a CakePHP Plugin allowing easy access to the GTFS Real-Time feed offered by Translink
 https://gtfsrt.api.translink.com.au/
-Output of protobuf data is changable between JSON and PHPArray by specifing the argment ('json' or 'phparray') when initializing the GtfsRtLoader model.
+Output of protobuf data is changable between JSON and PHPArray by specifing the 2nd argment ('json' or 'phparray') when initializing the GtfsRtLoader model.
 
 I almost exclusively use the CakePHP framework when programming in PHP, so it made sense to make a plugin for it.
 
