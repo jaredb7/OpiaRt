@@ -2,6 +2,6 @@
 
 App::uses('AppModel', 'Model');
 
-class OpiaRTAppModel extends AppModel {
+class OpiaRtAppModel extends AppModel {
 
 }

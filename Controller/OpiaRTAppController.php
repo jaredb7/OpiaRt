@@ -2,6 +2,12 @@
 
 App::uses('AppController', 'Controller');
 
-class OpiaRTAppController extends AppController {
+class OpiaRtAppController extends AppController {
+
+    public function beforeRender()
+    {
+        $this->viewClass = 'Json';
+    }
+
 
 }
