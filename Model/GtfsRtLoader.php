@@ -51,7 +51,7 @@ class GtfsRtLoader extends OpiaRtAppModel
     protected $feed_name = "feed";
 
     //URL to where the Translink RT feed sits
-    protected $gtfs_rt_base_url = "http://gtfsrt.api.translink.com.au/";
+    protected $gtfs_rt_base_url = "https://gtfsrt.api.translink.com.au/";
     //URL of the zipfile we're processing
     protected $gtfs_rt_feed_url = null;
 
@@ -66,11 +66,12 @@ class GtfsRtLoader extends OpiaRtAppModel
      */
     public static $DEFAULT_CURL_OPTS = array(
         CURLOPT_SSLVERSION => 1,
-        CURLOPT_CONNECTTIMEOUT => 1,
+        CURLOPT_CONNECTTIMEOUT => 10,
         CURLOPT_RETURNTRANSFER => TRUE,
-        CURLOPT_TIMEOUT => 5, // maximum number of seconds to allow cURL functions to execute
-        CURLOPT_USERAGENT => 'CakePHP OPIA Proxy',
-        CURLOPT_HTTPHEADER => array("Content-Type: application/json; charset=utf-8", "Accept:application/json, text/javascript, */*; q=0.01"),
+        CURLOPT_TIMEOUT => 10, // maximum number of seconds to allow cURL functions to execute
+        CURLOPT_USERAGENT => 'CakePHP OPIA RT Proxy',
+//        CURLOPT_HTTPHEADER => array("Content-Type: application/json; charset=utf-8", "Accept:application/json, text/javascript, */*; q=0.01"),
+        CURLOPT_HTTPHEADER => array(),
         CURLOPT_SSL_VERIFYHOST => 2,
         CURLOPT_SSL_VERIFYPEER => false,
         CURLOPT_SSL_CIPHER_LIST => 'TLSv1',
@@ -127,7 +128,7 @@ class GtfsRtLoader extends OpiaRtAppModel
 
 
             //Perform cURL request
-            $d = $this->do_request(  $this->gtfs_rt_feed_url,self::$GET,'',array(),array());
+            $d = $this->do_request($this->gtfs_rt_feed_url, self::$GET, '', array(), array());
 
 
 //            //Set the content resource for httpsocket
@@ -138,15 +139,16 @@ class GtfsRtLoader extends OpiaRtAppModel
             // File handle
             $f = fopen($this->gtfs_rt_feed_local_path, 'w');
             //Write feed to file
-            fwrite($f,$d);
+            fwrite($f, $d);
+
 //            fflush($f);
             //close file
             fclose($f);
-
             $timer_end = microtime(true);
         }
+        $filesize = filesize($this->gtfs_rt_feed_local_path);
 
-        CakeLog::info('get_feed :: -- Finished downloading :: Took:' . round($timer_end - $timer_start, 3) . ' ms.', 'opia_rt');
+        CakeLog::info('get_feed :: -- Finished downloading :: Took:' . round($timer_end - $timer_start, 3) . ' ms. Downloaded [' . round(($filesize / 1024), 3) . '] kb of data', 'opia_rt');
 
         //Reset the http_socket
 //        $this->http_socket->reset(true);
@@ -163,7 +165,8 @@ class GtfsRtLoader extends OpiaRtAppModel
      * @return mixed|null
      * @throws Exception
      */
-    private function do_request($resourcePath, $method, $queryParams, $postData, $headerParams){
+    private function do_request($resourcePath, $method, $queryParams, $postData, $headerParams)
+    {
         $headers = array();
         $request = array();
 
@@ -191,7 +194,7 @@ class GtfsRtLoader extends OpiaRtAppModel
 
         //Init curl
         $curl = curl_init();
-        curl_setopt($curl, CURLOPT_TIMEOUT, 1);
+//        curl_setopt($curl, CURLOPT_TIMEOUT, 10);
         // return the result on success, rather than just TRUE
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 
@@ -206,8 +209,8 @@ class GtfsRtLoader extends OpiaRtAppModel
         }
 
         //Set HTTP Basic authentication
-        if((Configure::read('OpiaProxy.opiaLogin') != "") && (Configure::read('OpiaProxy.opiaPassword') != "") ){
-            curl_setopt($curl, CURLOPT_USERPWD, Configure::read('OpiaProxy.opiaLogin') . ":" . Configure::read('OpiaProxy.opiaPassword')); //Your credentials goes here
+        if ((Configure::read('OpiaRt.opiaLogin') != "") && (Configure::read('OpiaRt.opiaPassword') != "")) {
+            curl_setopt($curl, CURLOPT_USERPWD, Configure::read('OpiaRt.opiaLogin') . ":" . Configure::read('OpiaRt.opiaPassword')); //Your credentials goes here
         }
 
         if (!empty($queryParams)) {
@@ -245,20 +248,26 @@ class GtfsRtLoader extends OpiaRtAppModel
 
         //handle response
         if ($response_info['http_code'] == 0) {
+            CakeLog::write('warning', "TIMEOUT: API call to " . $url . " took more than 1s to return", 'opia_rt');
             throw new Exception("TIMEOUT: API call to " . $url . " took more than 1s to return");
         } else if ($response_info['http_code'] == 200) {
             $data = ($response);
         } else if ($response_info['http_code'] == 400) {
+            CakeLog::write('warning', ($response) . " " . $url . " : response code: " . $response_info['http_code'], 'opia_rt');
             throw new Exception(($response) . " " . $url . " : response code: " . $response_info['http_code']);
         } else if ($response_info['http_code'] == 401) {
+            CakeLog::write('warning', "Unauthorized API request to " . $url . " : Invalid Login Credentials", 'opia_rt');
             throw new Exception("Unauthorized API request to " . $url . " : Invalid Login Credentials");
         } else if ($response_info['http_code'] == 403) {
+            CakeLog::write('warning', "Quota exceeded for this method, or a security error prevented completion of your (successfully authorized) request : " . $url, 'opia_rt');
             throw new Exception("Quota exceeded for this method, or a security error prevented completion of your (successfully authorized) request : " . $url);
         } else if ($response_info['http_code'] == 404) {
             $data = null;
         } else if ($response_info['http_code'] == 500) {
+            CakeLog::write('warning', "Internal server error, response code: " . $response_info['http_code'], 'opia_rt');
             throw new Exception("Internal server error, response code: " . $response_info['http_code']);
         } else {
+            CakeLog::write('warning', "Can't connect to the api: " . $url . " : response code: " . $response_info['http_code'], 'opia_rt');
             throw new Exception("Can't connect to the api: " . $url . " : response code: " . $response_info['http_code']);
         }
 

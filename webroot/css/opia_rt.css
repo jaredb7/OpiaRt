@@ -1,0 +1,26 @@
+.list-group-item {
+    word-wrap: break-word;
+}
+
+.cache-items-list-content {
+    height: 68px;
+    overflow-y: scroll;
+}
+
+.cache-items-list {
+    height: 68px;
+}
+
+.log-view-list{
+    height: 420px;
+    overflow-y: scroll;
+}
+
+.purge_link{
+    color: #FFF;
+    font-weight: bolder
+}
+
+.label-status{
+    font-size: 1em !important;
+}
